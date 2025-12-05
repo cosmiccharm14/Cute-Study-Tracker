@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✨💖 Sparkly Study Tracker 💖✨</title>
+<style>
+body {
+  font-family: 'Comic Sans MS', cursive, sans-serif;
+  background: linear-gradient(135deg, #ffc0cb, #dda0dd, #87cefa);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+.container {
+  max-width: 1000px;
+  margin: 20px auto;
+  background: rgba(255,255,255,0.95);
+  padding: 25px;
+  border-radius: 30px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.2);
+  position: relative;
+}
+h1 {
+  text-align: center;
+  font-size: 3em;
+  color: #800080;
+  margin-bottom: 15px;
+}
+.sticker {
+  position: absolute;
+  font-size: 2.5em;
+  animation: wiggle 2s infinite;
+}
+@keyframes wiggle {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(-10deg); }
+  50% { transform: rotate(10deg); }
+  75% { transform: rotate(-10deg); }
+  100% { transform: rotate(0deg); }
+}
+.tabs { display: flex; flex-wrap: wrap; margin-bottom: 20px; }
+.tab { flex: 1; padding: 15px; margin: 3px; background: #dda0dd; color: white; text-align: center; border-radius: 15px; cursor: pointer; font-size: 1.3em; transition: all 0.3s ease; }
+.tab.active, .tab:hover { background: #800080; transform: scale(1.05); }
+input, button { padding: 15px; border-radius: 15px; border: none; margin: 5px 0; font-size: 1.2em; }
+input { width: 80%; }
+button { background: #ff69b4; color: white; cursor: pointer; transition: transform 0.2s ease; }
+button:hover { transform: scale(1.05); }
+.section-buttons button { background: #dda0dd; color: white; margin-right: 5px; font-size: 1.1em; transition: transform 0.2s ease; }
+.section-buttons button.active, .section-buttons button:hover { background: #800080; transform: scale(1.05); }
+.list-item { background: #eee; padding: 12px; border-radius: 12px; margin: 6px 0; position: relative; font-size: 1.2em; display:flex; justify-content: space-between; align-items: center; }
+.delete-btn { background: #ff4d4d; border-radius: 12px; padding: 5px 10px; font-size:1em; cursor: pointer; margin-left: 10px; transition: transform 0.2s ease; }
+.delete-btn:hover { transform: scale(1.1); }
+#buddy { font-size: 3.5em; text-align: center; margin: 20px 0; }
+#progress { text-align: center; margin-bottom: 15px; color:#800080; font-weight:bold; font-size:1.3em; }
+.sparkle {
+  position: absolute;
+  font-size: 2em;
+  animation: sparkleAnim 1s forwards;
+  pointer-events: none;
+}
+@keyframes sparkleAnim {
+  0% {opacity:1; transform:translateY(0) scale(1);}
+  100% {opacity:0; transform:translateY(-40px) scale(1.7);}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>✨💖 Sparkly Study Tracker 💖✨</h1>
+  <div class="sticker" style="top:10px; left:10px;">✨</div>
+  <div class="sticker" style="top:10px; right:10px;">💖</div>
+  <div class="sticker" style="bottom:10px; left:10px;">🌈</div>
+  <div class="sticker" style="bottom:10px; right:10px;">🦄</div>
+
+  <div id="buddy">🐣✨</div>
+  <div id="progress">Progress: 0</div>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div class="section-buttons">
+    <button data-section="covered" class="active">covered</button>
+    <button data-section="todo">todo</button>
+    <button data-section="questions">questions</button>
+    <button data-section="pastpapers">pastpapers</button>
+  </div>
+
+  <input type="text" id="itemInput" placeholder="Write something ✨💖">
+  <button onclick="addItem()">Add ✨</button>
+
+  <div id="list"></div>
+</div>
+
+<script>
+const subjects = ["Maths B","Pure Maths","Chemistry","Physics","Biology","English Language"];
+let data = JSON.parse(localStorage.getItem("studyData")) || {};
+subjects.forEach(s => { if(!data[s]) data[s] = {covered:[], todo:[], questions:[], pastpapers:[]}; });
+let activeSubject = subjects[0];
+let activeSection = "covered";
+
+const tabsDiv = document.getElementById("tabs");
+subjects.forEach(sub => {
+  const t = document.createElement("div");
+  t.textContent = sub;
+  t.className = "tab" + (sub===activeSubject?" active":"");
+  t.onclick = ()=>{ activeSubject=sub; updateTabs(); updateList(); };
+  tabsDiv.appendChild(t);
+});
+
+function updateTabs(){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  Array.from(tabsDiv.children).forEach(t=>{ if(t.textContent===activeSubject) t.classList.add("active"); });
+}
+
+document.querySelectorAll(".section-buttons button").forEach(btn=>{
+  btn.onclick = ()=>{
+    activeSection=btn.dataset.section;
+    document.querySelectorAll(".section-buttons button").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    updateList();
+  }
+});
+
+function addItem(){
+  const val = document.getElementById("itemInput").value.trim();
+  if(!val) return;
+  data[activeSubject][activeSection].push(val);
+  document.getElementById("itemInput").value="";
+  saveData();
+  spawnSparkle();
+  updateList();
+}
+
+function saveData(){
+  localStorage.setItem("studyData", JSON.stringify(data));
+}
+
+function updateList(){
+  const listDiv = document.getElementById("list");
+  listDiv.innerHTML="";
+  data[activeSubject][activeSection].forEach((item,index)=>{
+    const d = document.createElement("div");
+    d.className="list-item";
+    d.innerHTML = `<span>📌 ${item} ✨💖</span>`;
+    const del = document.createElement("button");
+    del.className="delete-btn";
+    del.textContent="❌";
+    del.onclick = ()=>{ data[activeSubject][activeSection].splice(index,1); saveData(); updateList(); };
+    d.appendChild(del);
+    listDiv.appendChild(d);
+  });
+  updateBuddy();
+}
+
+function updateBuddy(){
+  const total = Object.values(data).flatMap(s=>[...s.covered,...s.todo,...s.questions,...s.pastpapers]).length;
+  document.getElementById("progress").textContent = "Progress: "+total;
+  let buddy="🐣✨";
+  if(total>=5 && total<15) buddy="🐥💖✨";
+  else if(total>=15 && total<30) buddy="🐤🌈✨";
+  else if(total>=30) buddy="🦄📚✨💖";
+  document.getElementById("buddy").textContent = buddy;
+}
+
+function spawnSparkle(){
+  const sparkle = document.createElement("div");
+  sparkle.className="sparkle";
+  sparkle.textContent=["✨","💖","🌈","🦄"][Math.floor(Math.random()*4)];
+  sparkle.style.left=(Math.random()*80+10)+"%";
+  sparkle.style.top=(Math.random()*80+10)+"%";
+  document.body.appendChild(sparkle);
+  setTimeout(()=>{ sparkle.remove(); },1000);
+}
+
+updateList();
+</script>
+
+</body>
+</html>
